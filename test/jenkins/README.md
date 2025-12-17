@@ -9,7 +9,7 @@ The tests validate the main Jenkinsfile pipeline and shared library functions wi
 ## Test Files
 
 | File | Description |
-|------|-------------|
+| ---- | ----------- |
 | `JenkinsfileTest.groovy` | Integration tests for the main Jenkinsfile pipeline |
 | `PipelineHelpersTest.groovy` | Unit tests for the shared `pipeline-helpers.groovy` library |
 
@@ -48,7 +48,7 @@ Import the project as a Gradle project in IntelliJ IDEA or Eclipse, then run tes
 ### JenkinsfileTest
 
 | Test | Description |
-|------|-------------|
+| ---- | ----------- |
 | `testPipelineLoadsSuccessfully` | Verifies the Jenkinsfile loads without errors |
 | `testPipelineWithNoChanges` | Tests pipeline when no infrastructure changes detected |
 | `testPipelineWithStagingChangesOnly` | Tests pipeline with only staging changes |
@@ -64,7 +64,7 @@ Import the project as a Gradle project in IntelliJ IDEA or Eclipse, then run tes
 ### PipelineHelpersTest
 
 | Test Category | Tests |
-|---------------|-------|
+| ------------- | ----- |
 | `setupTools` | Definition, version parameter acceptance |
 | `azureLogin` | Definition, credential acceptance |
 | `azureLogout` | Definition, execution |

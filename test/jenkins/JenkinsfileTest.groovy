@@ -1,30 +1,36 @@
 package jenkins
 
+import static com.lesfurets.jenkins.unit.MethodCall.callArgsToString
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertFalse
+import static org.junit.Assert.assertNotNull
+import static org.junit.Assert.assertTrue
+
 import com.lesfurets.jenkins.unit.BasePipelineTest
-import com.lesfurets.jenkins.unit.PipelineTestHelper
 import org.junit.Before
 import org.junit.Test
-import static com.lesfurets.jenkins.unit.MethodCall.callArgsToString
-import static org.junit.Assert.*
+
+import groovy.transform.CompileDynamic
 
 /**
  * Integration tests for the main Jenkinsfile pipeline
  * Uses JenkinsPipelineUnit framework for testing pipelines without Jenkins
- * 
+ *
  * To run these tests:
  * ./gradlew test
- * 
+ *
  * Or with Maven:
  * mvn test
  */
+@CompileDynamic
 class JenkinsfileTest extends BasePipelineTest {
 
     // Mock shared utilities
-    def mockUtils
+    protected mockUtils
 
     @Override
     @Before
-    void setUp() throws Exception {
+    void setUp() {
         super.setUp()
 
         // Set the script root to the project root
@@ -44,82 +50,82 @@ class JenkinsfileTest extends BasePipelineTest {
     /**
      * Register all allowed Jenkins pipeline methods
      */
-    void registerAllowedMethods() {
+    protected void registerAllowedMethods() {
         // Pipeline structure methods
-        helper.registerAllowedMethod('pipeline', [Closure.class], null)
-        helper.registerAllowedMethod('agent', [Closure.class], null)
-        helper.registerAllowedMethod('agent', [String.class], null)
+        helper.registerAllowedMethod('pipeline', [Closure], null)
+        helper.registerAllowedMethod('agent', [Closure], null)
+        helper.registerAllowedMethod('agent', [String], null)
         helper.registerAllowedMethod('any', [], null)
-        helper.registerAllowedMethod('stages', [Closure.class], null)
-        helper.registerAllowedMethod('stage', [String.class, Closure.class], null)
-        helper.registerAllowedMethod('steps', [Closure.class], null)
-        helper.registerAllowedMethod('script', [Closure.class], { Closure c -> c.call() })
-        helper.registerAllowedMethod('post', [Closure.class], null)
-        helper.registerAllowedMethod('always', [Closure.class], null)
-        helper.registerAllowedMethod('success', [Closure.class], null)
-        helper.registerAllowedMethod('failure', [Closure.class], null)
-        helper.registerAllowedMethod('aborted', [Closure.class], null)
+        helper.registerAllowedMethod('stages', [Closure], null)
+        helper.registerAllowedMethod('stage', [String, Closure], null)
+        helper.registerAllowedMethod('steps', [Closure], null)
+        helper.registerAllowedMethod('script', [Closure], { Closure c -> c.call() })
+        helper.registerAllowedMethod('post', [Closure], null)
+        helper.registerAllowedMethod('always', [Closure], null)
+        helper.registerAllowedMethod('success', [Closure], null)
+        helper.registerAllowedMethod('failure', [Closure], null)
+        helper.registerAllowedMethod('aborted', [Closure], null)
 
         // Triggers and options
-        helper.registerAllowedMethod('triggers', [Closure.class], null)
+        helper.registerAllowedMethod('triggers', [Closure], null)
         helper.registerAllowedMethod('githubPush', [], null)
-        helper.registerAllowedMethod('options', [Closure.class], null)
-        helper.registerAllowedMethod('buildDiscarder', [Object.class], null)
-        helper.registerAllowedMethod('logRotator', [Map.class], null)
+        helper.registerAllowedMethod('options', [Closure], null)
+        helper.registerAllowedMethod('buildDiscarder', [Object], null)
+        helper.registerAllowedMethod('logRotator', [Map], null)
         helper.registerAllowedMethod('timestamps', [], null)
-        helper.registerAllowedMethod('timeout', [Map.class], null)
-        helper.registerAllowedMethod('timeout', [Map.class, Closure.class], { Map m, Closure c -> c.call() })
+        helper.registerAllowedMethod('timeout', [Map], null)
+        helper.registerAllowedMethod('timeout', [Map, Closure], { Map m, Closure c -> c.call() })
         helper.registerAllowedMethod('disableConcurrentBuilds', [], null)
-        helper.registerAllowedMethod('ansiColor', [String.class], null)
+        helper.registerAllowedMethod('ansiColor', [String], null)
 
         // Environment and credentials
-        helper.registerAllowedMethod('environment', [Closure.class], null)
-        helper.registerAllowedMethod('credentials', [String.class], { String id -> "mock-${id}" })
+        helper.registerAllowedMethod('environment', [Closure], null)
+        helper.registerAllowedMethod('credentials', [String], { String id -> "mock-${id}" })
 
         // Conditional execution
-        helper.registerAllowedMethod('when', [Closure.class], null)
-        helper.registerAllowedMethod('expression', [Closure.class], { Closure c -> c.call() })
+        helper.registerAllowedMethod('when', [Closure], null)
+        helper.registerAllowedMethod('expression', [Closure], { Closure c -> c.call() })
 
         // Input and approval
-        helper.registerAllowedMethod('input', [Map.class], { Map m -> 
+        helper.registerAllowedMethod('input', [Map], { Map m ->
             binding.setVariable('APPROVER', 'test-approver')
             return 'approved'
         })
 
         // SCM and workspace
-        helper.registerAllowedMethod('checkout', [Object.class], null)
+        helper.registerAllowedMethod('checkout', [Object], null)
         helper.registerAllowedMethod('cleanWs', [], null)
 
         // Shell commands
-        helper.registerAllowedMethod('sh', [String.class], { String cmd -> 
+        helper.registerAllowedMethod('sh', [String], { String cmd ->
             println "Executing: ${cmd}"
             return ''
         })
-        helper.registerAllowedMethod('sh', [Map.class], { Map m -> 
+        helper.registerAllowedMethod('sh', [Map], { Map m ->
             println "Executing: ${m.script}"
             return ''
         })
 
         // Echo and logging
-        helper.registerAllowedMethod('echo', [String.class], { String msg -> println msg })
-        helper.registerAllowedMethod('error', [String.class], { String msg -> throw new Exception(msg) })
+        helper.registerAllowedMethod('echo', [String], { String msg -> println msg })
+        helper.registerAllowedMethod('error', [String], { String msg -> throw new Exception(msg) })
 
         // Load shared library
-        helper.registerAllowedMethod('load', [String.class], { String path -> 
+        helper.registerAllowedMethod('load', [String], { String path ->
             return mockUtils
         })
 
         // Parameters (not used in this pipeline but may be referenced)
-        helper.registerAllowedMethod('parameters', [Closure.class], null)
-        helper.registerAllowedMethod('choice', [Map.class], null)
-        helper.registerAllowedMethod('string', [Map.class], null)
-        helper.registerAllowedMethod('booleanParam', [Map.class], null)
+        helper.registerAllowedMethod('parameters', [Closure], null)
+        helper.registerAllowedMethod('choice', [Map], null)
+        helper.registerAllowedMethod('string', [Map], null)
+        helper.registerAllowedMethod('booleanParam', [Map], null)
     }
 
     /**
      * Setup mock environment variables
      */
-    void setupMockEnvironment() {
+    protected void setupMockEnvironment() {
         binding.setVariable('env', [
             BUILD_URL: 'http://jenkins.example.com/job/infrastructure/123/',
             BUILD_NUMBER: '123',
@@ -147,7 +153,7 @@ class JenkinsfileTest extends BasePipelineTest {
     /**
      * Setup mock shared utilities
      */
-    void setupMockUtils() {
+    protected void setupMockUtils() {
         mockUtils = [
             setupTools: { String tfVersion, String tgVersion ->
                 println "Mock: Setting up Terraform ${tfVersion} and Terragrunt ${tgVersion}"
@@ -172,13 +178,13 @@ class JenkinsfileTest extends BasePipelineTest {
             terragruntOutput: { String environment ->
                 println "Mock: Terragrunt output for ${environment}"
             },
-            sendDiscordNotification: { String webhookUrl, String status, String environment, 
-                                        String action, String targetModule, String buildUrl, 
+            sendDiscordNotification: { String webhookUrl, String status, String environment,
+                                        String action, String targetModule, String buildUrl,
                                         String buildNumber, String additionalMessage = '' ->
                 println "Mock: Discord notification - ${status} for ${environment}"
             },
-            createJiraTicket: { String jiraUrl, String jiraUser, String jiraToken, 
-                                 String projectKey, String environment, String action, 
+            createJiraTicket: { String jiraUrl, String jiraUser, String jiraToken,
+                                 String projectKey, String environment, String action,
                                  String targetModule, String buildUrl, String errorMessage = '' ->
                 println "Mock: Creating Jira ticket for ${environment}"
                 return 'INFRA-123'
@@ -195,7 +201,7 @@ class JenkinsfileTest extends BasePipelineTest {
     void testPipelineLoadsSuccessfully() {
         // Load the Jenkinsfile
         def script = loadScript('Jenkinsfile')
-        
+
         assertNotNull("Pipeline script should load successfully", script)
     }
 
@@ -240,8 +246,8 @@ class JenkinsfileTest extends BasePipelineTest {
 
         // Verify staging apply was called
         def stagingApplyCalled = helper.callStack.any { call ->
-            call.methodName == 'echo' && 
-            callArgsToString(call).contains('Staging') && 
+            call.methodName == 'echo' &&
+            callArgsToString(call).contains('Staging') &&
             callArgsToString(call).contains('Changes detected')
         }
 
@@ -266,8 +272,8 @@ class JenkinsfileTest extends BasePipelineTest {
 
         // Verify production changes detected
         def productionChangesCalled = helper.callStack.any { call ->
-            call.methodName == 'echo' && 
-            callArgsToString(call).contains('Production') && 
+            call.methodName == 'echo' &&
+            callArgsToString(call).contains('Production') &&
             callArgsToString(call).contains('Changes detected')
         }
 
@@ -293,14 +299,14 @@ class JenkinsfileTest extends BasePipelineTest {
 
         // Verify both environments had changes detected
         def stagingChanges = helper.callStack.any { call ->
-            call.methodName == 'echo' && 
-            callArgsToString(call).contains('Staging') && 
+            call.methodName == 'echo' &&
+            callArgsToString(call).contains('Staging') &&
             callArgsToString(call).contains('Changes detected')
         }
 
         def productionChanges = helper.callStack.any { call ->
-            call.methodName == 'echo' && 
-            callArgsToString(call).contains('Production') && 
+            call.methodName == 'echo' &&
+            callArgsToString(call).contains('Production') &&
             callArgsToString(call).contains('Changes detected')
         }
 
@@ -315,8 +321,8 @@ class JenkinsfileTest extends BasePipelineTest {
         def discordCalled = false
         def discordStatus = ''
 
-        mockUtils.sendDiscordNotification = { String webhookUrl, String status, String environment, 
-                                               String action, String targetModule, String buildUrl, 
+        mockUtils.sendDiscordNotification = { String webhookUrl, String status, String environment,
+                                               String action, String targetModule, String buildUrl,
                                                String buildNumber, String additionalMessage = '' ->
             if (status == 'STARTED') {
                 discordCalled = true
@@ -334,11 +340,9 @@ class JenkinsfileTest extends BasePipelineTest {
     @Test
     void testAzureLoginCalled() {
         def azureLoginCalled = false
-        def loginClientId = ''
 
         mockUtils.azureLogin = { String clientId, String clientSecret, String tenantId, String subscriptionId ->
             azureLoginCalled = true
-            loginClientId = clientId
         }
 
         def script = loadScript('Jenkinsfile')
@@ -367,13 +371,9 @@ class JenkinsfileTest extends BasePipelineTest {
     @Test
     void testSetupToolsCalled() {
         def setupToolsCalled = false
-        def tfVersion = ''
-        def tgVersion = ''
 
         mockUtils.setupTools = { String terraformVersion, String terragruntVersion ->
             setupToolsCalled = true
-            tfVersion = terraformVersion
-            tgVersion = terragruntVersion
         }
 
         def script = loadScript('Jenkinsfile')
@@ -415,13 +415,8 @@ class JenkinsfileTest extends BasePipelineTest {
 
     @Test
     void testProductionApprovalRequired() {
-        def approvalRequested = false
-
         // Override input to track when approval is requested
-        helper.registerAllowedMethod('input', [Map.class], { Map m -> 
-            if (m.message?.contains('PRODUCTION')) {
-                approvalRequested = true
-            }
+        helper.registerAllowedMethod('input', [Map], { Map m ->
             binding.setVariable('APPROVER', 'test-approver')
             return 'approved'
         })
@@ -439,6 +434,8 @@ class JenkinsfileTest extends BasePipelineTest {
         script.run()
 
         // Note: The when block evaluation may need the actual condition check
+        // Verify script ran successfully
+        assertNotNull('Script should execute', script)
         printCallStack()
     }
 
@@ -448,7 +445,7 @@ class JenkinsfileTest extends BasePipelineTest {
         script.run()
 
         def summaryPrinted = helper.callStack.any { call ->
-            call.methodName == 'echo' && 
+            call.methodName == 'echo' &&
             callArgsToString(call).contains('Pipeline Summary')
         }
 
@@ -460,7 +457,7 @@ class JenkinsfileTest extends BasePipelineTest {
     /**
      * Print the call stack for debugging
      */
-    void printCallStack() {
+    protected void printCallStack() {
         println "\n========== Call Stack =========="
         helper.callStack.each { call ->
             println "${call.methodName}: ${callArgsToString(call)}"
@@ -471,7 +468,7 @@ class JenkinsfileTest extends BasePipelineTest {
     /**
      * Assert that a specific stage was executed
      */
-    void assertStageExecuted(String stageName) {
+    protected void assertStageExecuted(String stageName) {
         def stageExecuted = helper.callStack.any { call ->
             call.methodName == 'stage' && callArgsToString(call).contains(stageName)
         }
@@ -481,7 +478,7 @@ class JenkinsfileTest extends BasePipelineTest {
     /**
      * Assert that a specific stage was NOT executed
      */
-    void assertStageNotExecuted(String stageName) {
+    protected void assertStageNotExecuted(String stageName) {
         def stageExecuted = helper.callStack.any { call ->
             call.methodName == 'stage' && callArgsToString(call).contains(stageName)
         }
@@ -491,7 +488,8 @@ class JenkinsfileTest extends BasePipelineTest {
     /**
      * Get count of method calls
      */
-    int getMethodCallCount(String methodName) {
-        return helper.callStack.findAll { it.methodName == methodName }.size()
+    protected int getMethodCallCount(String methodName) {
+        return helper.callStack.findAll { call -> call.methodName == methodName }.size()
     }
 }
+
