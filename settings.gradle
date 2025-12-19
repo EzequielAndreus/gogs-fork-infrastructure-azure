@@ -1,0 +1,2 @@
+// CompileStatic not needed for settings scripts
+rootProject.name = 'gogs-infrastructure-azure'

@@ -1,0 +1,86 @@
+// CompileStatic not needed for build scripts
+plugins {
+    id 'groovy'
+    id 'java'
+}
+
+group = 'com.gogs.infrastructure'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.jenkins-ci.org/public/' }
+}
+
+dependencies {
+    // Groovy
+    implementation 'org.codehaus.groovy:groovy-all:3.0.19'
+
+    // Jenkins Pipeline Unit Testing
+    testImplementation 'com.lesfurets:jenkins-pipeline-unit:1.19'
+
+    // JUnit
+    testImplementation 'junit:junit:4.13.2'
+
+    // Assertions
+    testImplementation 'org.hamcrest:hamcrest:2.2'
+
+    // Mock framework
+    testImplementation 'org.mockito:mockito-core:5.7.0'
+}
+
+sourceSets {
+    main {
+        groovy {
+            srcDirs = ['jenkins/shared']
+        }
+    }
+    test {
+        groovy {
+            srcDirs = ['test/jenkins']
+        }
+        resources {
+            srcDirs = ['.']
+        }
+    }
+}
+
+test {
+    useJUnit()
+
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showExceptions true
+        showCauses true
+        showStackTraces true
+        exceptionFormat 'full'
+    }
+
+    // Set working directory to project root so Jenkinsfile can be found
+    workingDir = projectDir
+
+    // Increase memory for tests
+    maxHeapSize = '512m'
+
+    // Show output
+    outputs.upToDateWhen { false }
+}
+
+// Task to run only Jenkins pipeline tests
+tasks.register('testJenkinsPipeline', Test) {
+    description = 'Run Jenkins pipeline integration tests'
+    group = 'verification'
+
+    include '**/JenkinsfileTest.class'
+    include '**/PipelineHelpersTest.class'
+
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showStandardStreams = true
+    }
+}
+
+// Wrapper task
+tasks.named('wrapper') {
+    gradleVersion = '8.4'
+}
