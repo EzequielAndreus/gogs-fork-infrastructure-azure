@@ -57,7 +57,7 @@ go test -v -timeout 30m -run TestLogAnalyticsModule
 
 ## Test Structure
 
-```
+```text
 test/
 ├── README.md
 ├── go.mod
@@ -74,7 +74,7 @@ test/
 ## Environment Variables
 
 | Variable | Description | Required |
-|----------|-------------|----------|
+| -------- | ----------- | -------- |
 | `ARM_SUBSCRIPTION_ID` | Azure Subscription ID | Yes |
 | `ARM_CLIENT_ID` | Service Principal Client ID | For CI/CD |
 | `ARM_CLIENT_SECRET` | Service Principal Secret | For CI/CD |
@@ -86,3 +86,5 @@ test/
 - Each test uses a unique random suffix to avoid naming conflicts
 - Tests are designed to be idempotent and isolated
 - Timeout is set to handle Azure resource provisioning times
+
+>Additional note: Given the need of managing the infra state, Terraform Cloud might be integrated into the URL.
