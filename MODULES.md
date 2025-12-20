@@ -5,7 +5,7 @@ This document provides an overview of all Terraform modules available in this in
 ## Module Overview
 
 | Module | Description | Azure Service Equivalent |
-|--------|-------------|--------------------------|
+| ------ | ----------- | ------------------------ |
 | [resource-group](#resource-group) | Resource container for all infrastructure | Azure Resource Group |
 | [key-vault](#key-vault) | Secure credential storage | AWS Secrets Manager equivalent |
 | [networking](#networking) | Virtual network infrastructure | VPC equivalent |
@@ -83,8 +83,9 @@ Creates the virtual network infrastructure including VNet, subnets, and Network 
 - `azurerm_network_security_group` - NSGs for container and VM subnets
 
 **Subnet Layout:**
+
 | Subnet | Purpose | Features |
-|--------|---------|----------|
+| ------ | ------- | -------- |
 | container-subnet | Container Instances | Container delegation enabled |
 | database-subnet | Azure SQL Database | SQL service endpoint enabled |
 | vm-subnet | Virtual Machines (Splunk) | Standard subnet |
@@ -258,7 +259,7 @@ Creates an Azure Log Analytics Workspace for centralized logging, monitoring, an
 
 ## Module Dependencies
 
-```
+```text
 resource-group
      │
      ├── log-analytics
@@ -297,3 +298,4 @@ module "networking" {
   # ... additional configuration
 }
 ```
+> Terraform Cloud is the proposed backend to store states. Any further information will be updated ASAP. Expected credential to be added: Terraform Cloud API Token.
