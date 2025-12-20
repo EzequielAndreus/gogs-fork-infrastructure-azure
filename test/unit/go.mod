@@ -1,4 +1,4 @@
-module "github.com/gogs-fork/infrastructure-azure/test"
+module github.com/EzequielAndreus/gogs-fork-infrastructure-azure/test/unit
 
 go 1.21
 
