@@ -1,6 +1,8 @@
 package test
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"fmt"
 	"strings"
 	"testing"
@@ -8,7 +10,23 @@ import (
 	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/crypto/ssh"
 )
+
+// generateSSHKeyPair generates an RSA SSH key pair for testing
+func generateSSHKeyPair(t *testing.T) string {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("Failed to generate private key: %v", err)
+	}
+
+	publicKey, err := ssh.NewPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		t.Fatalf("Failed to generate public key: %v", err)
+	}
+
+	return string(ssh.MarshalAuthorizedKey(publicKey))
+}
 
 // TestVirtualMachineModule tests the virtual-machine module
 func TestVirtualMachineModule(t *testing.T) {
@@ -56,7 +74,7 @@ func TestVirtualMachineModule(t *testing.T) {
 	vmNsgID := terraform.Output(t, netOptions, "vm_nsg_id")
 
 	// Generate SSH key for testing
-	sshPublicKey := "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7..." // Placeholder - use a real key in actual tests
+	sshPublicKey := generateSSHKeyPair(t)
 
 	// Create VM
 	vmOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
@@ -144,7 +162,7 @@ func TestVirtualMachineModuleWithDataDisk(t *testing.T) {
 	vmSubnetID := terraform.Output(t, netOptions, "vm_subnet_id")
 	vmNsgID := terraform.Output(t, netOptions, "vm_nsg_id")
 
-	sshPublicKey := "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7..." // Placeholder
+	sshPublicKey := generateSSHKeyPair(t)
 
 	// Create VM with data disk
 	vmOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
