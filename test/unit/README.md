@@ -13,7 +13,7 @@ This directory contains unit tests for all Terraform modules using [Terratest](h
 
 ```bash
 # Install Go dependencies
-cd test
+cd test/unit
 go mod download
 
 # Login to Azure
@@ -26,7 +26,7 @@ az account set --subscription "YOUR_SUBSCRIPTION_ID"
 ### Run All Tests
 
 ```bash
-cd test
+cd test/unit
 go test -v -timeout 60m ./...
 ```
 
@@ -58,7 +58,7 @@ go test -v -timeout 30m -run TestLogAnalyticsModule
 ## Test Structure
 
 ```text
-test/
+test/unit/
 ├── README.md
 ├── go.mod
 ├── go.sum
@@ -86,5 +86,6 @@ test/
 - Each test uses a unique random suffix to avoid naming conflicts
 - Tests are designed to be idempotent and isolated
 - Timeout is set to handle Azure resource provisioning times
+- SSH keys for VM tests are generated dynamically using `golang.org/x/crypto/ssh`
 
 >Additional note: Given the need of managing the infra state, Terraform Cloud might be integrated into the URL.
