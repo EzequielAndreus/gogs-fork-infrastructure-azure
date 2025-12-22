@@ -1,0 +1,29 @@
+# Checkov configuration
+# https://www.checkov.io/
+
+# Skip these checks (with justification)
+skip-check:
+  # CKV_AZURE_35: "Network watcher flow logs - not required for this setup"
+  # CKV_AZURE_36: "Storage logging - handled by Log Analytics"
+
+# Check directories
+directory:
+  - modules/
+
+# Framework to use
+framework:
+  - terraform
+
+# Compact output
+compact: true
+
+# Soft fail (don't exit with error code)
+soft-fail: true
+
+# Output format
+output:
+  - cli
+  - json
+
+# Output file for JSON
+output-file-path: checkov-results.json

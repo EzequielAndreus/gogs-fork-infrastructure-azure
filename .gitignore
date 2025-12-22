@@ -1,0 +1,48 @@
+# Terragrunt cache
+.terragrunt-cache/
+
+# Terraform files
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+crash.*.log
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Lock files (comment out if you want to commit lock files)
+# .terraform.lock.hcl
+
+# Sensitive files
+*.pem
+*.key
+*.p12
+.env
+.env.*
+!.env.example
+secrets.tfvars
+*.auto.tfvars
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Backup files
+*.bak
+*.backup
