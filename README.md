@@ -6,16 +6,16 @@ This repository contains Infrastructure as Code (IaC) for deploying and managing
 
 ## 🏗️ Architecture Overview
 
-The infrastructure provisions the following Azure services:
+The infrastructure provisions Azure services using Terraform modules managed by Terragrunt:
 
-| Service | Azure Resource | AWS Equivalent | Purpose |
-|---------|---------------|----------------|---------|
-| Container Service | Azure Container Instance | ECS Fargate | Docker containers from DockerHub |
-| Database | Azure SQL Database | RDS | Managed relational database |
-| Compute | Azure Virtual Machine | EC2 | Splunk monitoring server |
-| Secrets Management | Azure Key Vault | Secrets Manager | Secure credential storage |
-| Networking | Azure VNet, Subnets, NSG | VPC, Subnets, Security Groups | Network isolation |
-| Logging | Log Analytics Workspace | CloudWatch | Centralized logging |
+| Service | Azure Resource | Purpose |
+|---------|---------------|---------|
+| **Container Service** | Azure Container Instance | Runs Gogs application from DockerHub |
+| **Database** | Azure SQL Database | Managed relational database for application data |
+| **Compute** | Azure Virtual Machine | Splunk monitoring and log aggregation server |
+| **Secrets Management** | Azure Key Vault | Secure storage for credentials and sensitive data |
+| **Networking** | VNet, Subnets, NSG | Network isolation and security rules |
+| **Logging** | Log Analytics Workspace | Centralized logging and diagnostics |
 
 ### Integrations
 
@@ -30,18 +30,38 @@ The infrastructure provisions the following Azure services:
 gogs-fork-infrastructure-azure/
 ├── 📄 README.md                          # This file - project documentation
 ├── 📄 JENKINS-CREDENTIALS.md             # Required Jenkins credentials 
-├── 📄 GH-CREDENTIALS.md                  # Required G. Secrets credentials 
+├── 📄 GH-CREDENTIALS.md                  # Required GitHub Secrets credentials 
 ├── 📄 Jenkinsfile                        # Main Jenkins CD pipeline
 ├── 📄 terragrunt.hcl                     # Root Terragrunt configuration
 ├── 📄 .tflint.hcl                        # TFLint configuration
+├── 📄 .checkov.yml                       # Checkov security scanner config
+├── 📄 build.gradle                       # Gradle build configuration
+├── 📄 settings.gradle                    # Gradle settings
 │
 ├── 📁 .github/
 │   └── 📁 workflows/
-│       └── 📄 ci.yml                     # GitHub Actions CI workflow
+│       ├── 📄 ci.yml                     # GitHub Actions CI workflow
+│       └── 📄 linter.yaml                # Super-linter workflow
 │
 ├── 📁 jenkins/
-│   └── 📄 shared/           
-        └── 📄 pipeline-helpers.groovy    # Jenkinsfile helper functions
+│   └── 📁 shared/           
+│       └── 📄 pipeline-helpers.groovy    # Shared pipeline utility functions
+│
+├── 📁 test/                              # Test files
+│   ├── 📁 jenkins/                       # Jenkins pipeline tests
+│   │   ├── 📄 JenkinsfileTest.groovy
+│   │   ├── 📄 PipelineHelpersTest.groovy
+│   │   └── 📄 README.md
+│   └── 📁 unit/                          # Go unit tests
+│       ├── 📄 container_instance_test.go
+│       ├── 📄 key_vault_test.go
+│       ├── 📄 log_analytics_test.go
+│       ├── 📄 networking_test.go
+│       ├── 📄 resource_group_test.go
+│       ├── 📄 sql_database_test.go
+│       ├── 📄 virtual_machine_test.go
+│       ├── 📄 go.mod
+│       └── 📄 README.md
 │
 ├── 📁 modules/                           # Reusable Terraform modules
 │   ├── 📁 resource-group/                # Azure Resource Group
@@ -124,7 +144,9 @@ gogs-fork-infrastructure-azure/
 | `terragrunt.hcl` | 🔴 Critical | Root Terragrunt configuration with remote state and provider setup |
 | `Jenkinsfile` | 🔴 Critical | Main Jenkins pipeline for CD operations |
 | `.tflint.hcl` | 🟡 Important | TFLint rules for code quality |
+| `.checkov.yml` | 🟡 Important | Checkov security scanner configuration |
 | `.github/workflows/ci.yml` | 🔴 Critical | GitHub Actions CI pipeline |
+| `.github/workflows/linter.yaml` | 🟡 Important | Super-linter for code quality (Groovy, Markdown, Terraform, Terragrunt) |
 
 ### Terraform Modules
 
@@ -152,26 +174,29 @@ gogs-fork-infrastructure-azure/
 The CI pipeline runs on every PR and push to `main`:
 
 1. **Format Check** - Validates Terraform formatting
-2. **Validate** - Validates Terraform syntax for all modules
+2. **Validate** - Validates Terraform syntax for all 7 modules
 3. **TFLint** - Lints Terraform code for best practices
 4. **Security Scan (Checkov)** - Scans for security misconfigurations
-5. **Security Scan (tfsec)** - Additional security scanning
-6. **Terragrunt Validate** - Validates Terragrunt HCL files
-7. **Terragrunt Plan** - Generates execution plan (PR only)
-8. **Cost Estimation** - Estimates infrastructure costs (optional)
+5. **Security Scan (tfsec)** - Additional security scanning  
+6. **Documentation Check** - Verifies README files and checks for TODOs
+7. **Cost Estimation** - Estimates infrastructure costs with Infracost (PR only, optional)
+
+**Note:** Terragrunt plan/apply are intentionally excluded from CI for performance and security. These run in the CD pipeline with proper Azure credentials and approval gates.
 
 ### CD Pipeline (Jenkins)
 
-The CD pipeline handles infrastructure provisioning:
+The CD pipeline handles infrastructure provisioning with automatic change detection:
 
-1. **Checkout** - Clones the repository
-2. **Setup Tools** - Verifies Terraform/Terragrunt installation
-3. **Azure Login** - Authenticates to Azure
-4. **Validate** - Validates configuration
-5. **Plan** - Generates Terraform plan
-6. **Approval** - Manual approval (for production)
-7. **Apply/Destroy** - Provisions/destroys infrastructure
-8. **Outputs** - Displays resource outputs
+1. **Initialize** - Loads shared utilities, sets up environment
+2. **Setup Tools** - Installs/verifies Terraform and Terragrunt
+3. **Azure Login** - Authenticates with service principal
+4. **Plan Staging** - Generates plan, detects if changes exist
+5. **Apply Staging** - Auto-applies if changes detected
+6. **Plan Production** - Generates plan, detects if changes exist  
+7. **Approval** - Manual approval required for production changes
+8. **Apply Production** - Applies changes after approval
+
+**Automatic Change Detection:** Pipeline only applies when Terragrunt detects actual infrastructure changes, skipping unnecessary applies.
 
 ### 📢 Notifications & Alerting
 
@@ -188,10 +213,11 @@ The CD pipeline handles infrastructure provisioning:
 
 ### Prerequisites
 
-- [Terraform](https://www.terraform.io/downloads) >= 1.5.0
-- [Terragrunt](https://terragrunt.gruntwork.io/docs/getting-started/install/) >= 0.53.0
+- [Terraform](https://www.terraform.io/downloads) >= 1.5.7
+- [Terragrunt](https://terragrunt.gruntwork.io/docs/getting-started/install/) >= 0.53.0  
 - [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
-- Azure subscription with appropriate permissions
+- Azure subscription with Contributor permissions
+- Azure Storage Account for Terraform state (configured in terragrunt.hcl)
 
 ### Local Development
 
@@ -317,4 +343,4 @@ This project is licensed under the MIT License.
 
 ---
 
-**Note**: See [CREDENTIALS.md](./CREDENTIALS.md) for detailed credential setup instructions.
+**Note**: See [JENKINS-CREDENTIALS.md](./JENKINS-CREDENTIALS.md) for Jenkins CD credential setup and [GH-CREDENTIALS.md](./GH-CREDENTIALS.md) for GitHub Actions CI credential setup.
